@@ -144,6 +144,7 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
                             markerOptions.position(latLng);
                             mMap.addMarker(markerOptions);
                         }
+
                     }
                   //  Double lat=25.4995151;
                     //Double longi=90.8954654;
@@ -225,7 +226,7 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
             @Override
             public void onMapClick(LatLng latLng) {
 
-                if (markerPoints.size() < 0) {
+                if (markerPoints.size() > 2) {
                     markerPoints.clear();
                     mMap.clear();
                 }

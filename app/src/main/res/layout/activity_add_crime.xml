@@ -3,30 +3,33 @@
 
 
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/relativeLayoutFragment"
     android:layout_width="match_parent"
-    android:layout_height="fill_parent" >
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
     <fragment
-        xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map2"
         android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="300dp"
-        android:layout_height="400dp"
-        tools:context=".MapsActivity"
-        />
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:context=".MapsActivity" />
 
     <EditText
         android:id="@+id/add_crime_description"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/map2"
         android:hint="edit_message"
         />
     <Button
         android:id="@+id/plot_crime"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/add_crime_description"
         android:text="Plot Crime Points"
         />
@@ -37,4 +40,4 @@
         android:id="@+id/add_crime_save_db"
         android:text="Add Crime!"/>
 
-</RelativeLayout>
+</LinearLayout>
