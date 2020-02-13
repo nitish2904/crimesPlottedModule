@@ -24,6 +24,13 @@
         android:hint="edit_message"
         />
     <Button
+        android:id="@+id/plot_crime"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_below="@+id/add_crime_description"
+        android:text="Plot Crime Points"
+        />
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -36,11 +37,19 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import static android.content.ContentValues.TAG;
+
 
 public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCallback {
+
+    //
+    int z=0;
+
 
     private GoogleMap mMap;
     private ProgressDialog loadingBar;
@@ -52,6 +61,11 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
     ArrayList markerPoints= new ArrayList();
     Pincode data = new Pincode();
     DatabaseReference reference;
+    private Button plotCrime;
+    MarkerOptions markerOptions = new MarkerOptions();
+    final List<Pincode> PincodeList = new ArrayList<>();
+    final HashMap<String,Pincode> AllCrimeshash = new HashMap<>();
+    final List<HashMap<String,Pincode> > AllCrimes = new ArrayList<>();
 
 
     @Override
@@ -61,6 +75,7 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
         mDatabase = FirebaseDatabase.getInstance().getReference();
         addtoDB = (Button) findViewById(R.id.add_crime_save_db);
         crimeType = (EditText)findViewById(R.id.add_crime_description);
+        plotCrime = (Button) findViewById(R.id.plot_crime);
         loadingBar = new ProgressDialog(this);
 
         reference = FirebaseDatabase.getInstance().getReference().child(pincode);
@@ -78,7 +93,85 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
                 AddingDetailsToFirebase();
             }
         });
+
+        plotCrime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PlotCrimeMethod();
+            }
+        });
     }
+
+
+    private void PlotCrimeMethod()
+    {
+        if(markerPoints.size()>0) {
+            LatLng origin = (LatLng) markerPoints.get(0);
+
+            String url = getDirectionsUrl(origin);
+            AddCrimeActivity.DownloadTask downloadTask = new AddCrimeActivity.DownloadTask();
+            downloadTask.execute(url);
+            Toast.makeText(AddCrimeActivity.this, origin.toString(), Toast.LENGTH_SHORT).show();
+            // Creating MarkerOptions
+            MarkerOptions options = new MarkerOptions();
+
+            // Setting the position of the marker
+            options.position(origin);
+            mMap.addMarker(options);
+            String tempPincode = pincode1;
+            final DatabaseReference reff;
+            reff = FirebaseDatabase.getInstance().getReference().child("1").child(tempPincode);
+            reff.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                   AllCrimeshash.clear();
+
+                    for(DataSnapshot postSnapshot: dataSnapshot.getChildren())
+                    {
+                        AllCrimeshash.put(postSnapshot.getKey(),postSnapshot.getValue(Pincode.class));
+                        //Toast.makeText(AddCrimeActivity.this, "LLLALLAL"+postSnapshot, Toast.LENGTH_SHORT).show();
+                        Iterator it = AllCrimeshash.entrySet().iterator();
+                        int count =0;
+                        while(it.hasNext())
+                        {
+                            // Pincode details = me.getValue();
+                            HashMap.Entry pair = (HashMap.Entry)it.next();
+                            Pincode value =(Pincode) pair.getValue();
+
+                            LatLng latLng = new LatLng(Double.valueOf(value.getP_latitude()), Double.valueOf(value.getP_longitude()));
+                            // Setting the position for the marker
+                            markerPoints.add(latLng);
+                            markerOptions.position(latLng);
+                            mMap.addMarker(markerOptions);
+                        }
+                    }
+                  //  Double lat=25.4995151;
+                    //Double longi=90.8954654;
+                    //Predict answer = new Predict(AllCrimeshash.size(),AllCrimeshash,lat,longi);
+                    //Double answerpredicted = answer.prediction();
+                   // answerpredicted =5.03;
+/*
+                            Log.i(TAG, "Predict: "+value.getP_latitude());
+*/
+                    //Double answerind = answerpredicted;
+                    //String answerp = Double.toString(answerind);
+                    //Toast.makeText(AddCrimeActivity.this, "Accuracy"+answerp, Toast.LENGTH_SHORT).show();;
+                    //System.out.println(value.getP_latitude());
+
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
+        else
+        {
+            Toast.makeText(this, "Select a point on map to fetch", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
 
     private void AddingDetailsToFirebase() {
         String crimetypetext = crimeType.getText().toString();
@@ -99,7 +192,8 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
             loadingBar.setCanceledOnTouchOutside(false);
             loadingBar.show();
             data.setPincode(pincode1);
-            data.setCoordinates(origin);
+            data.setP_latitude(String.valueOf(origin.latitude));
+            data.setP_longitude(String.valueOf(origin.longitude));
             data.setThreatlevel(crimetypetext);
             loadingBar.dismiss();
             reference.child(pincode1).child(randomNumber+"").setValue(data);
@@ -122,16 +216,16 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
 
 
         // Add a marker in Sydney and move the camera
-        //LatLng sydney = new LatLng(23.7746739, 90.3925568);
+        LatLng sydney = new LatLng(25.456264, 81.859102);
         //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         //moveToCurrentLocation(sydney);
-        ///mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        moveToCurrentLocation(sydney);
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
 
-                if (markerPoints.size() > 0) {
+                if (markerPoints.size() < 0) {
                     markerPoints.clear();
                     mMap.clear();
                 }
@@ -152,17 +246,30 @@ public class AddCrimeActivity extends FragmentActivity implements OnMapReadyCall
                     String url = getDirectionsUrl(origin);
                     AddCrimeActivity.DownloadTask downloadTask = new AddCrimeActivity.DownloadTask();
                     downloadTask.execute(url);
-                    Toast.makeText(AddCrimeActivity.this, origin.toString(), Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(AddCrimeActivity.this, origin.toString(), Toast.LENGTH_SHORT).show();
                 }
 
                 // Add new marker to the Google Map Android API V2
-                mMap.addMarker(options);
+                //mMap.addMarker(markerOptions);
+
 
 
 
             }
         });
     }
+
+    private void moveToCurrentLocation(LatLng currentLocation)
+    {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation,10));
+        // Zoom in, animating the camera.
+        mMap.animateCamera(CameraUpdateFactory.zoomIn());
+        // Zoom out to zoom level 10, animating with a duration of 2 seconds.
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(10), 2000, null);
+
+
+    }
+
     private class DownloadTask extends AsyncTask<String, Void, String> {
         private ProgressDialog progressDialog;
         @Override
